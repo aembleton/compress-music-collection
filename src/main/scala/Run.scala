@@ -1,6 +1,6 @@
 import java.io.File
 
-import actor.{LameActor, RootActor}
+import actor.{VbrActor, LameActor, RootActor}
 import akka.actor.{PoisonPill, Props, ActorSystem}
 import akka.routing.BalancingPool
 import model.FileOperation
@@ -25,10 +25,10 @@ object Run {
 
     val system = ActorSystem("actor-system")
     val rootActor = system.actorOf(Props[RootActor])
-
+    val vbrActor = system.actorOf(Props[VbrActor])
     val lamePool = system.actorOf(BalancingPool(4).props(Props[LameActor]), "lamePool")
 
-    val fileOperation = FileOperation("""/home/arthur/Music/Anjunabeats Vol. 11 (Mixed By Above & Beyond) (320kbps) (Split + Mixed) (Inspiron)/Split""", "/home/arthur/output", lamePool)
+    val fileOperation = FileOperation("""/home/arthur/Music/Anjunabeats Vol. 11 (Mixed By Above & Beyond) (320kbps) (Split + Mixed) (Inspiron)/Split""", "/home/arthur/output", lamePool, vbrActor)
 
     rootActor ! fileOperation
   }
