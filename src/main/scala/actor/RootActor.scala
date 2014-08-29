@@ -2,13 +2,17 @@ package actor
 
 import java.io.File
 
-import akka.actor.{Props, Actor}
+import akka.actor.{PoisonPill, Props, Actor}
+import model.FileOperation
 
 class RootActor extends Actor{
 
   override def receive: Receive = {
-    case file: File => context.actorOf(Props(new DirectoryActor)) ! file
-    case Completed(_) => println("SHUTDOWN");context.system.shutdown();
+    case fileOperation: FileOperation => {
+      val actor = context.actorOf(Props(new DirectoryActor))
+      actor ! fileOperation
+      actor ! PoisonPill
+    }
     case _ => Unit
   }
 }

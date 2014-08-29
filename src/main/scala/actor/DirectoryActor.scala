@@ -2,47 +2,33 @@ package actor
 
 import java.io.File
 
-import akka.actor.{Actor, Props}
-import scala.collection.mutable._
+import akka.actor.{PoisonPill, Actor, Props}
+import model.FileOperation
+import sys.process._
 
 class DirectoryActor extends Actor {
 
-  var path:String = ""
-  val filesBeingPrcoessed:Set[String] = Set.empty
-
   override def receive: Receive = {
-    case path: File => readPath(path)
-    case Completed(filePath) => {
-      completed(filePath)
-    }
+    case fileOperation: FileOperation => readPath(fileOperation)
     case _ => Unit
   }
 
-  def readPath (fileToRead: File) = {
-    this.path = fileToRead.getAbsolutePath
-    fileToRead match {
-      case dir:File if (dir.isDirectory) => readDirectory(dir)
-      case file:File if (file.isFile) => readFile(file)
+  def readPath(fileOperation:FileOperation) = {
+    new File(fileOperation.source) match {
+      case dir:File if (dir.isDirectory) => readDirectory(fileOperation, dir)
+      case file:File if (file.isFile) => readFile(fileOperation)
       case _ => Unit
     }
   }
 
-  def readDirectory (dir: File) = dir.listFiles().map(file => {
-    filesBeingPrcoessed += file.getAbsolutePath
-    println(s"Adding $filesBeingPrcoessed")
-    context.actorOf(Props(new DirectoryActor)) ! file
+  def readDirectory (fileOperation:FileOperation, dir: File) = dir.listFiles().map(file => {
+    val childActor = context.actorOf(Props(new DirectoryActor))
+    childActor ! fileOperation.appendChild(file.getName)
+    childActor ! PoisonPill
   })
 
-  def readFile (file: File) = {
-    println(file.getAbsolutePath)
-    sender ! Completed(path)
-  }
+  def readFile (fileOperation:FileOperation) = {
 
-  def completed (filePath: String): Unit = {
-    filesBeingPrcoessed -= filePath
-    if (filesBeingPrcoessed.size < 1) {
-      println(s"Shutdown $path")
-      sender ! Completed(path)
-    }
+    fileOperation.lameActor ! fileOperation
   }
 }

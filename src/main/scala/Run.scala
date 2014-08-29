@@ -1,7 +1,9 @@
 import java.io.File
 
-import actor.RootActor
-import akka.actor.{Props, ActorSystem}
+import actor.{LameActor, RootActor}
+import akka.actor.{PoisonPill, Props, ActorSystem}
+import model.FileOperation
+import sys.process._
 
 object Run {
 
@@ -17,8 +19,16 @@ object Run {
 //      System.exit(1)
 //    }
 
+    //val fileOperation = FileOperation("""/home/arthur/Music/Anjunabeats Vol. 11 (Mixed By Above & Beyond) (320kbps) (Split + Mixed) (Inspiron)/Split/CD 1/single/01 Thomas Schwartz & Fausto Fanizza - You Would.mp3""", "/home/arthur/output/01 Thomas Schwartz & Fausto Fanizza - You Would.mp3")
+
+
     val system = ActorSystem("actor-system")
     val rootActor = system.actorOf(Props[RootActor])
-    rootActor ! new File("/Users/emblea01/Music/test")
+
+    val lameActor = system.actorOf(Props[LameActor])
+
+    val fileOperation = FileOperation("""/home/arthur/Music/Anjunabeats Vol. 11 (Mixed By Above & Beyond) (320kbps) (Split + Mixed) (Inspiron)/Split""", "/home/arthur/output", lameActor)
+
+    rootActor ! fileOperation
   }
 }
