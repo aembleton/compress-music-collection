@@ -23,12 +23,18 @@ class DirectoryActor extends Actor {
 
   def readDirectory (fileOperation:FileOperation, dir: File) = dir.listFiles().map(file => {
     val childActor = context.actorOf(Props(new DirectoryActor))
+
     childActor ! fileOperation.appendChild(file.getName)
     childActor ! PoisonPill
   })
 
   def readFile (fileOperation:FileOperation) = {
-
+    createDirStructure(fileOperation.destination)
     fileOperation.lameActor ! fileOperation
+  }
+
+  def createDirStructure(filePath:String) = {
+    val file = new File(filePath)
+    file.getParentFile.mkdirs()
   }
 }
